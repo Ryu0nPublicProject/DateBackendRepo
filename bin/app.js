@@ -4,32 +4,26 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
+const db_connect_1 = require("./db_connect");
 class App {
     constructor() {
         this.application = (0, express_1.default)();
     }
 }
 const app = new App().application;
-var secret = require('../secret.json');
-const { Pool } = require('pg');
-const pg = new Pool({
-    user: 'postgres',
-    host: secret.host,
-    database: 'postgres',
-    password: secret.password,
-    port: secret.port
-});
-pg.connect((err) => {
-    if (err)
-        console.log(err);
-    else {
-        console.log("데이터베이스 연결 성공");
-    }
-});
+app.use(express_1.default.json());
+app.use(express_1.default.urlencoded({ extended: false }));
+const select_query = "SELECT profile_url, name, d_day, tag, description FROM member_info";
 app.get("/", (req, res) => {
     res.send("healthy");
 });
 app.get("/get_profile", (req, res) => {
-    res.send("profile");
+    db_connect_1.pg.query(select_query, (error, result) => {
+        if (error)
+            res.sendStatus(500);
+        else
+            res.status(200).json(result.rows);
+        db_connect_1.pg.end();
+    });
 });
 app.listen(4000, () => console.log("start"));

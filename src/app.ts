@@ -1,4 +1,6 @@
-import express from "express"
+import express from "express";
+import {pg} from "./db_connect";
+import {get_info, set_info} from "./dto";
 
 class App {
   public application : express.Application;
@@ -9,32 +11,26 @@ class App {
 
 const app = new App().application;
 
-var secret = require('../secret.json')
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
 
-const {Pool} = require('pg');
-const pg = new Pool({
-  user: 'postgres',
-  host: secret.host,
-  database: 'postgres',
-  password: secret.password,
-  port: secret.port
-})
+const select_query = "SELECT profile_url, name, d_day, tag, description FROM member_info";
 
-pg.connect((err: any) => {
-  if (err) console.log(err);
-  else {
-    console.log("데이터베이스 연결 성공");
-  }
-})
-
-app.get("/",(req : express.Request , res : express.Response) =>{
+app.get("/",
+  (req : express.Request , res : express.Response) =>{
   res.send("healthy");
 })
 
 app.get(
     "/get_profile",
     (req: express.Request, res: express.Response) => {
-        res.send("profile");
+      pg.query(select_query, (error: any, result: any) => {
+        if (error)
+          res.sendStatus(500);
+        else
+          res.status(200).json(result.rows);
+        pg.end();
+      });
     }
 )
 
